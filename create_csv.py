@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-from config import FRAME, IMAGE_FOLDER, LABEL_FILE, LABEL_TRAIN_FILE_3D
+from config import FRAME, IMAGE_FOLDER, LABEL_FILE, LABEL_TEST_FILE, LABEL_TRAIN_FILE_3D, LABEL_VAL_FILE_3D
 
 
 def write_data(df, path):
@@ -36,3 +36,6 @@ def write_data(df, path):
 
 labels = pd.read_csv(LABEL_FILE)
 write_data(labels, LABEL_TRAIN_FILE_3D)
+
+labels = pd.read_csv(LABEL_TEST_FILE)
+write_data(labels, LABEL_VAL_FILE_3D)

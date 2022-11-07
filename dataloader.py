@@ -66,12 +66,13 @@ class ImageDataset(Dataset):
 
     def __getitem__(self, idx):
         img_paths = self.names[idx].split(',')
-        label = float(self.labels[idx])
+        label = float(round(float(self.labels[idx])))
         folder = int(self.folders[idx])
 
         flip = False
         if self.split == 'train':
             flip = np.random.randint(4) == 1
+        rand = np.random.rand() > .5
 
         imgs = []
         for img_path in img_paths:
@@ -80,7 +81,7 @@ class ImageDataset(Dataset):
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
             if flip:
-                if np.random.rand() > .5:
+                if rand > .5:
                     img = img[:, ::-1]
                 else:
                     img = cv2.flip(img, 0)

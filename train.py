@@ -12,7 +12,7 @@ from torch.distributions.gamma import Gamma
 from tqdm import tqdm
 
 from config import (ACCUMULATION_STEPS, BATCH_SIZE, DEVICE,
-                    LABEL_TRAIN_FILE_3D, MODEL_PATH, RANDOM_THRESHOLD)
+                    LABEL_TRAIN_FILE_3D, LABEL_VAL_FILE_3D, MODEL_PATH, RANDOM_THRESHOLD)
 from dataloader import ImageDataset
 from helper import calculate_eer
 from model import Model3D, build_face_model
@@ -199,6 +199,7 @@ def val(min_loss, min_err, max_acc):
         min_loss = running_loss/len(val_loader)
 
     if err < min_err:
+        torch.save(model.state_dict(), MODEL_PATH)
         min_err = err
 
     if acc > max_acc:
@@ -211,64 +212,22 @@ def val(min_loss, min_err, max_acc):
     return min_loss, min_err, max_acc
 
 
-epochs = 10
-losses = []
-errs = []
-acces = []
+epochs = 100
 
-dataset = pd.read_csv(LABEL_TRAIN_FILE_3D)
-splits = KFold(n_splits=5, shuffle=False)
+train_df, val_df = pd.read_csv(
+    LABEL_TRAIN_FILE_3D), pd.read_csv(LABEL_VAL_FILE_3D)
 
-for fold, (train_idx, val_idx) in enumerate(splits.split(np.arange(len(dataset)))):
-    print('#################################################################################################################')
-    print('Fold {}'.format(fold + 1))
-
-    train_df, val_df = dataset.iloc[train_idx, :], dataset.iloc[val_idx, :]
-
-    traindataset_one = ImageDataset('train', train_df,  False)
-    traindataset_two = ImageDataset('train', train_df, True)
-    valdataset = ImageDataset('val', val_df, False)
-
-    train_loader_one = torch.utils.data.DataLoader(
-        traindataset_one, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
-    train_loader_two = torch.utils.data.DataLoader(
-        traindataset_one, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
-
-    val_loader = torch.utils.data.DataLoader(
-        valdataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
-
-    model = Model3D()
-    model.to(DEVICE)
-
-    loss_fn = nn.BCELoss(reduction='none')
-    optimizer = optim.Adam(model.parameters(), lr=1e-4)
-
-    min_loss = float('inf')
-    min_err = float('inf')
-    max_acc = 0
-
-    for epoch in range(epochs):
-        print('===================================================================')
-        print('{} epochs {}/{} '.format(fold + 1, epoch+1, epochs))
-        train()
-        min_loss, min_err, max_acc = val(min_loss, min_err, max_acc)
-
-    losses.append(min_loss)
-    errs.append(min_err)
-    acces.append(max_acc)
-
-
-print('losses ', losses, mean(losses))
-print('errs ', errs, mean(errs))
-print('acces ', acces, mean(acces))
-
-traindataset_one = ImageDataset('train', dataset,  False)
-traindataset_two = ImageDataset('train', dataset, True)
+traindataset_one = ImageDataset('train', train_df,  False)
+traindataset_two = ImageDataset('train', train_df, True)
+valdataset = ImageDataset('val', val_df, False)
 
 train_loader_one = torch.utils.data.DataLoader(
     traindataset_one, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 train_loader_two = torch.utils.data.DataLoader(
     traindataset_one, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+
+val_loader = torch.utils.data.DataLoader(
+    valdataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
 model = Model3D()
 model.to(DEVICE)
@@ -276,9 +235,12 @@ model.to(DEVICE)
 loss_fn = nn.BCELoss(reduction='none')
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
+min_loss = float('inf')
+min_err = float('inf')
+max_acc = 0
+
 for epoch in range(epochs):
     print('===================================================================')
     print('epochs {}/{} '.format(epoch+1, epochs))
     train()
-
-torch.save(model.state_dict(), MODEL_PATH)
+    min_loss, min_err, max_acc = val(min_loss, min_err, max_acc)

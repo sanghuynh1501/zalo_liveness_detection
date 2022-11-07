@@ -7,8 +7,8 @@ import pandas as pd
 import torch
 from tqdm import tqdm
 
-from config import (BATCH_SIZE, DEVICE, IMAGE_HEIGHT, IMAGE_WIDTH,
-                    LABEL_TEST_FILE, LABEL_VAL_FILE, NUMBER_FRAME, VIDEO_FOLDER)
+from config import (BATCH_SIZE, DEVICE, IMAGE_HEIGHT, IMAGE_WIDTH, LABEL_TEST_FILE,
+                    LABEL_VAL_FILE, NUMBER_FRAME, VIDEO_FOLDER, VIDEO_TEST_FOLDER)
 from dataloader import Normalize
 from helper import calculate_eer, read_video
 from model import build_face_model
@@ -19,7 +19,7 @@ torch.manual_seed(0)
 
 model = build_face_model()
 model.load_state_dict(torch.load(
-    'model_weights/model_efficient_00187.pth', map_location=DEVICE))
+    'model_weights/model_efficient.pth', map_location=DEVICE))
 model.to(DEVICE)
 model.eval()
 
@@ -78,19 +78,8 @@ full_labels = []
 pred_dict = {}
 label_dict = {}
 
-val_df = pd.read_csv(LABEL_VAL_FILE)
-
-file_names = val_df['folder_name'].tolist()
-true_labels = val_df['label'].tolist()
-
-for idx, folder in enumerate(file_names):
-    if folder not in label_dict:
-        label_dict[folder] = [true_labels[idx]]
-    else:
-        label_dict[folder].append(true_labels[idx])
-
-for filename in tqdm(label_dict.keys()):
-    images = read_video(f'{VIDEO_FOLDER}/{filename}.mp4', 5)
+for filename in tqdm(sorted(os.listdir(VIDEO_TEST_FOLDER), key=lambda x: int(x.split('.')[0]))):
+    images = read_video(f'{VIDEO_TEST_FOLDER}/{filename}', 5)
 
     labels = []
     for i in range(0, len(images), BATCH_SIZE):
@@ -101,19 +90,8 @@ for filename in tqdm(label_dict.keys()):
     full_names.append(filename)
     full_labels.append(mean(labels))
 
-    pred_dict[filename] = mean(labels)
 
+df = pd.DataFrame(list(zip(full_names, full_labels)),
+                  columns=['fname', 'liveness_score'])
 
-label_means = []
-pred_means = []
-file_names.sort()
-
-
-for folder in file_names:
-    label_means.append(mean(label_dict[folder]))
-    pred_means.append(pred_dict[folder])
-
-print('label_means ', label_means)
-
-err = calculate_eer(np.array(label_means), np.array(pred_means))
-print('err ', err)
+df.to_csv(LABEL_TEST_FILE, index=False)
