@@ -15,7 +15,7 @@ from config import (ACCUMULATION_STEPS, BATCH_SIZE, DEVICE,
                     LABEL_TRAIN_FILE_3D, LABEL_VAL_FILE_3D, MODEL_PATH, RANDOM_THRESHOLD)
 from dataloader import ImageDataset
 from helper import calculate_eer
-from model import Model3D, build_face_model
+from model import Model3D
 
 torch.cuda.empty_cache()
 np.random.seed(0)

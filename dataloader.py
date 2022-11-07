@@ -8,7 +8,7 @@ import torch
 from imgaug import augmenters as iaa
 from torch.utils.data import Dataset
 
-from config import FRAME, IMAGE_HEIGHT, IMAGE_WIDTH
+from config import FRAME, IMAGE_HEIGHT, IMAGE_WIDTH, LABEL_TRAIN_FILE_3D
 
 warnings.resetwarnings()
 warnings.simplefilter('ignore')
@@ -85,7 +85,7 @@ class ImageDataset(Dataset):
                     img = img[:, ::-1]
                 else:
                     img = cv2.flip(img, 0)
-
+            
             img = self.normalize(img)
             img = img.unsqueeze(1)
             imgs.append(img)
@@ -99,3 +99,13 @@ class ImageDataset(Dataset):
                 [imgs, padding], 1)
 
         return imgs, torch.Tensor([label]), torch.Tensor([folder])
+
+
+if __name__ == '__main__':
+    train_df = pd.read_csv(LABEL_TRAIN_FILE_3D)
+    traindataset = ImageDataset('train', train_df,  False)
+    train_loader = torch.utils.data.DataLoader(traindataset, batch_size=1, shuffle=True, num_workers=0)
+
+    count = 0
+    for idx, (img, label, folder) in enumerate(train_loader):
+        count += 1
