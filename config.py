@@ -1,0 +1,22 @@
+VIDEO_FOLDER = 'data/train/videos'
+VIDEO_TEST_FOLDER = 'data/public_test/public/videos'
+IMAGE_FOLDER = 'data/train/images'
+IMAGE_TEST_FOLDER = 'data/test/images'
+LABEL_FILE = 'data/train/label.csv'
+LABEL_TRAIN_FILE = 'data/train/label_train.csv'
+LABEL_TRAIN_FILE_3D = 'data/train/label_train_3d.csv'
+LABEL_VAL_FILE = 'data/train/label_val.csv'
+LABEL_VAL_FILE_3D = 'data/train/label_val_3d.csv'
+LABEL_TEST_FILE = 'data/test/label_test.csv'
+NUMBER_FRAME = 25
+IMAGE_WIDTH = 432
+IMAGE_HEIGHT = 768
+BATCH_SIZE = 2
+ACCUMULATION_STEPS = 16
+DEVICE = 'cuda'
+MODEL_PATH = 'model_efficient.pth'
+REPEAT = 4
+RANDOM_THRESHOLD = 0.3
+REVERSE = [7, 83, 130, 193, 349, 359, 440, 497, 555, 560, 584, 613, 632, 674, 678, 821, 897, 969, 1046, 1064, 1125, 1181,
+           1192, 1292, 1388, 1401, 1431, 1518, 1521, 1553, 1876]
+FRAME = 5
